@@ -21,6 +21,7 @@ if [ -n "${ARCGIS_API_KEY:-}" ]; then
   fi
   echo "Injected ARCGIS_API_KEY from environment/Codespaces secret into $ENV_FILE"
 else
-  echo "No ARCGIS_API_KEY secret found yet. Set it as a Codespaces secret"
-  echo "(Settings > Codespaces > Secrets) named ARCGIS_API_KEY, or edit $ENV_FILE manually."
+  echo "No ARCGIS_API_KEY secret found yet. Add a personal Codespaces secret named"
+  echo "ARCGIS_API_KEY at https://github.com/settings/codespaces (scoped to this repo),"
+  echo "then recreate the codespace -- or edit $ENV_FILE manually for this session."
 fi

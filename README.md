@@ -1,6 +1,6 @@
 # Developer Sandbox
 
-Developer Sandbox shwoing best practices using ArcGIS Location Platform.
+Developer Sandbox showing best practices using ArcGIS Location Platform.
 
 Goal:
 
@@ -31,11 +31,16 @@ Supported environments:
 
 ## Open in GitHub Codespaces
 
-1. Add your key as a Codespaces secret **before** creating the codespace:
-   `GitHub repo -> Settings -> Secrets and variables -> Codespaces -> New secret`
-   Name: `ARCGIS_API_KEY`, Value: your ArcGIS Location Platform API key.
-2. Click: Code -> Codespaces -> Create Codespace.
-3. That's it. The container automatically:
+You do **not** need to own or fork this repo. Codespaces secrets can be set on
+your own GitHub account and scoped to any repository you can access:
+
+1. Go to [github.com/settings/codespaces](https://github.com/settings/codespaces).
+2. Under **Codespaces secrets**, click **New secret**.
+3. Name: `ARCGIS_API_KEY`, Value: your ArcGIS Location Platform API key.
+4. Under **Repository access**, select this repository (`EsriDE/dev-sandbox`),
+   or search for it if you're working from your own fork.
+5. Go back to this repo -> Code -> Codespaces -> Create Codespace.
+6. That's it. The container automatically:
    - installs backend dependencies,
    - writes `backend/.env` with your secret,
    - starts both the backend and frontend servers.

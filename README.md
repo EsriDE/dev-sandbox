@@ -31,43 +31,33 @@ Supported environments:
 
 ## Open in GitHub Codespaces
 
-Click:
+1. Add your key as a Codespaces secret **before** creating the codespace:
+   `GitHub repo -> Settings -> Secrets and variables -> Codespaces -> New secret`
+   Name: `ARCGIS_API_KEY`, Value: your ArcGIS Location Platform API key.
+2. Click: Code -> Codespaces -> Create Codespace.
+3. That's it. The container automatically:
+   - installs backend dependencies,
+   - writes `backend/.env` with your secret,
+   - starts both the backend and frontend servers.
 
-Code -> Codespaces -> Create Codespace
+No manual commands required. The frontend port opens a preview automatically.
 
-After startup:
-
-```bash
-cd backend
-
-pip install -r requirements.txt
-
-uvicorn app.main:app --reload
-```
-
-Frontend:
+If you didn't set the secret beforehand, run manually after adding it:
 
 ```bash
-cd frontend
-
-python -m http.server 8080
+./start.sh
 ```
-
-Open:
-
-http://localhost:8080
 
 ---
 
 ## Environment Variables
 
-Copy:
+If you prefer local setup (Docker Desktop / Dev Containers) instead of a
+Codespaces secret, copy the example file and fill in your key:
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
-
-Configure:
 
 ```env
 ARCGIS_API_KEY=YOUR_API_KEY
@@ -81,6 +71,12 @@ Test:
 
 ```bash
 curl http://localhost:8000/geocode?q=Berlin
+```
+
+Health check (confirms the API key was picked up):
+
+```bash
+curl http://localhost:8000/health
 ```
 
 ---

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>ArcGIS Developer Sandbox</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <!-- ArcGIS Maps SDK for JavaScript via CDN: no Node.js / build step required -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.31/"></script>
+  <style>
+    html, body, #viewDiv { padding: 0; margin: 0; height: 100%; width: 100%; }
+    #searchBox {
+      position: absolute; top: 10px; left: 10px; z-index: 10;
+      background: white; padding: 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div id="searchBox">
+    <input id="address" type="text" placeholder="Enter an address (e.g. Berlin)" size="30" />
+    <button id="searchBtn">Geocode</button>
+  </div>
+  <div id="viewDiv"></div>
+
+  <script>
+    // Backend URL: same host, different port. Works out of the box in Codespaces
+    // because forwarded ports keep the same hostname.
+    const BACKEND_URL = window.location.origin.replace(/:\d+$/, ":8000");
+
+    require(["esri/Map", "esri/views/MapView", "esri/Graphic"], (Map, MapView, Graphic) => {
+      const map = new Map({ basemap: "topo-vector" });
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [10, 51],
+        zoom: 4,
+      });
+
+      document.getElementById("searchBtn").addEventListener("click", async () => {
+        const q = document.getElementById("address").value;
+        if (!q) return;
+
+        const resp = await fetch(`${BACKEND_URL}/geocode?q=${encodeURIComponent(q)}`);
+        const data = await resp.json();
+        const candidate = data.candidates && data.candidates[0];
+        if (!candidate) {
+          alert("No results found.");
+          return;
+        }
+
+        view.graphics.removeAll();
+        const point = { type: "point", longitude: candidate.location.x, latitude: candidate.location.y };
+        view.graphics.add(new Graphic({
+          geometry: point,
+          symbol: { type: "simple-marker", color: "red", size: 10 },
+        }));
+        view.goTo({ center: [point.longitude, point.latitude], zoom: 10 });
+      });
+    });
+  </script>
+</body>
+</html>

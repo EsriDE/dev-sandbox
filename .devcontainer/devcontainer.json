@@ -5,7 +5,22 @@
     "dockerfile": "Dockerfile"
   },
 
-  "forwardPorts": [8000,8080],
+  "forwardPorts": [8000, 8080],
+
+  "portsAttributes": {
+    "8000": {
+      "label": "Backend (FastAPI)",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Frontend (Map App)",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "onCreateCommand": "bash .devcontainer/setup-env.sh",
+  "postCreateCommand": "pip install -r backend/requirements.txt",
+  "postStartCommand": "bash start.sh",
 
   "customizations": {
     "vscode": {

@@ -1,0 +1,19 @@
+{
+  "name": "Developer Sandbox",
+
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  "forwardPorts": [8000,8080],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "github.copilot",
+        "github.copilot-chat"
+      ]
+    }
+  }
+}

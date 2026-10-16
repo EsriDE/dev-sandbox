@@ -6,12 +6,24 @@ Each lesson is an ordinary HTML page, containing **both** a runnable demonstrati
 
 ## Start locally
 
+**No Python required:** Open the repository in VS Code, install the **Live Server** extension, right-click `index.html` and select **Open with Live Server**. It normally opens at `http://127.0.0.1:5500`.
+
+Alternatively, if Python is available:
+
 ```bash
-# From the repository root
+# Run from the repository root (optional)
 python3 -m http.server 8080
 ```
 
-Open http://localhost:8080 and enter an ArcGIS API key with the services required by the lesson. Alternatively, start a GitHub Codespace; its devcontainer serves the same port automatically.
+Open the served page and enter an ArcGIS API key with permissions for the lesson. GitHub Codespaces still automatically serves port `8080`. Allow your local URL in API-key referrer settings when relevant.
+
+## Free-tier showcase
+
+The sidebar now contains **14 lessons**: 12 demonstrations of starting allowances for Mapping, Places, Geocoding, Routing and Elevation, plus the existing 3D and Offline Maps lessons. All Data Hosting lessons have been removed.
+
+The spatial service examples show their results **on the map**: nearby POIs as pins, a solved route as a line between marked stops, a drive-time area as a shaded polygon and an elevation reading at a selected point. Each user-triggered service request consumes applicable usage.
+
+See [the free-tier lesson catalogue](docs/FREE_TIER_CATALOG.md) for prerequisites and a short presentation sequence. Free allowances are not unlimited usage and require suitable credentials.
 
 ## Workflow
 
@@ -33,8 +45,11 @@ lessons/
   01-map-basics.html     Basemaps and 2D navigation
   02-place-search.html   Geocoding with ArcGIS Search
   03-scene-basics.html   Elevation and 3D scenes
+  04-offline-maps.html  Prepare maps for offline use
+  05–14*.html          Additional mapping, places, routing and elevation examples
 docs/
   LESSON_AUTHORING.md    The lesson contract for humans and Copilot
+  FREE_TIER_CATALOG.md  Pricing inventory and presenter path
 .devcontainer/
   devcontainer.json      GitHub Codespaces port 8080 server
 ```
@@ -66,3 +81,9 @@ The lesson editor runs your HTML in a same-origin iframe (`srcdoc`). **Only exec
 - The full HTML of the selected lesson is also its source code; there is no duplicated `code` string or `mount()` implementation.
 - Standard browser refresh is sufficient for code changes. Rebuild Codespaces only after changing the devcontainer configuration.
 - JavaScript API use is permitted when the lesson needs additional functionality, but prefer declarative `<arcgis-map>`, `<arcgis-scene>` and their child components first.
+
+## Lesson 04: Prepare maps for offline use
+
+Open **Prepare maps for offline use** in the sidebar. It demonstrates supported basemap categories and provides a public Web Map item inspector that reads portal item JSON and checks reachable FeatureServer `Sync` capabilities. It also walks learners through the portal's **Settings → Offline → Manage Offline Areas** workflow.
+
+The inspector is advisory, not an offline readiness certification. It cannot access private portal content using only the browser API key and does not download map areas; doing so requires a supported native offline app. ArcGIS Location Platform accounts have additional offline-product restrictions documented by Esri.

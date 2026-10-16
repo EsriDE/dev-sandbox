@@ -150,10 +150,20 @@ window.addEventListener("hashchange", selectLesson);
 
 // The manifest controls the list; no lesson logic belongs in the shell.
 const navigation = $("#navigation");
+let previousCategory;
 lessons.forEach((lesson, index) => {
+  if (lesson.category !== previousCategory) {
+    // Group related free-tier examples without changing lesson files.
+    const heading = document.createElement("h3");
+    heading.textContent = lesson.category || "Other";
+    heading.className = "nav-heading";
+    navigation.append(heading);
+    previousCategory = lesson.category;
+  }
   const link = document.createElement("a");
   link.href = `#${lesson.id}`;
   link.textContent = `${String(index + 1).padStart(2, "0")}  ${lesson.title}`;
+  link.title = lesson.freeTier ? `Free tier: ${lesson.freeTier} · ${lesson.mode}` : "Additional lesson";
   navigation.append(link);
 });
 

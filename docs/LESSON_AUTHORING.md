@@ -14,7 +14,7 @@ Copy `lessons/_template.html` to `lessons/NN-short-topic.html`. Include the full
 4. **Live demo first:** Immediately visible and interactive, preferably using declarative ArcGIS Web Components directly in HTML.
 5. **Educational context:** Introductory learning objective, `What you see`, `How it works`, `Try it`, `What's next?` and `Documentation`.
 6. **Specific sources:** At least one accurate link to an official ArcGIS SDK or location-services documentation page.
-7. **Manifest entry:** `{ id: "stable-slug", title: "Visible lesson title", file: "lessons/NN-short-topic.html" }` in `lessons/manifest.js`. File name and ID should be unique.
+7. **Manifest entry:** `{ id: "stable-slug", title: "Visible lesson title", file: "lessons/NN-short-topic.html" }` in `lessons/manifest.js`. File name and ID should be unique. For free-tier examples add `category`, `freeTier` and `mode` fields. Keep billing details consistent with `docs/FREE_TIER_CATALOG.md`.
 
 ## Writing and design
 
@@ -26,6 +26,7 @@ Copy `lessons/_template.html` to `lessons/NN-short-topic.html`. Include the full
 - Explain exactly what a user sees and which controls are interactive; give one click experiment and one editable-HTML experiment.
 - Indicate which ArcGIS services and API-key privileges are used. Never claim an example works without testing it.
 - Use accurate, specific documentation URLs. Check latest official references when possible.
+- For pricing examples, distinguish a live request from a portal-only workflow. Display the free allowance, any additional credentials/content needed, and current pricing reference. Never simulate a paid service success or upload.
 - No npm, bundlers, React/Vue, local backend, credentials in source files, or dependencies unrelated to the learning goal.
 
 ## Example authoring workflow

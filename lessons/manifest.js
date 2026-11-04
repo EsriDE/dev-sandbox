@@ -15,4 +15,5 @@ export const lessons = [
   { id: "elevation", title: "Elevation at a point", file: "lessons/14-elevation.html", category: "Elevation", freeTier: "50,000 points", mode: "Live" },
   { id: "scene-basics", title: "Explore terrain in 3D", file: "lessons/03-scene-basics.html", category: "Extras" },
   { id: "offline-maps", title: "Prepare maps for offline use", file: "lessons/04-offline-maps.html", category: "Extras" },
+  { id: "export-maps", title: "Basemaps Export", file: "lessons/15-basemap-extent-export.html", category: "Extras" },
 ];

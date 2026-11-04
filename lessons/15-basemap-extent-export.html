@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline · Basemap für einen Extent exportieren</title>
+  <script>
+    // Den im Sandbox-Host gespeicherten Schlüssel verwenden, niemals einen Schlüssel fest eintragen.
+    var esriConfig = { apiKey: sessionStorage.getItem("ARCGIS_API_KEY") };
+  </script>
+  <script type="module" src="https://js.arcgis.com/5.1/"></script>
+  <style>
+    /* Standalone lesson: map first, concise controls, learning text below. */
+    body { margin:0; font:16px/1.55 system-ui,sans-serif; color:#23313d; background:#fff }
+    arcgis-map { display:block; height:min(65vh, 610px); min-height:340px }
+    .controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 20px; background:#eef5f9 }
+    button { font:inherit; padding:8px 11px; border:1px solid #007ac2; border-radius:5px; color:#fff; background:#007ac2; cursor:pointer }
+    button:disabled { opacity:.65; cursor:wait }
+    button.secondary { background:#fff; color:#1f4b65; border-color:#9eb0bb }
+    .hint { margin:0; padding:7px 20px; background:#fff4dc; font-size:.9rem }
+    #status { margin:0; padding:10px 20px; background:#f5f9fb; min-height:22px; font-size:.94rem }
+    details { padding:0 20px 12px; background:#f5f9fb }
+    summary { cursor:pointer; color:#006da8 }
+    code { display:block; max-height:130px; overflow:auto; margin-top:8px; padding:10px; background:#e8eff3; font-size:.78rem }
+    article { max-width:820px; margin:auto; padding:24px 24px 60px }
+    article h2 { margin-top:26px }
+    article a { color:#006da8 }
+  </style>
+</head>
+<body>
+  <arcgis-map basemap="arcgis/topographic" center="6.96,50.94" zoom="11">
+    <arcgis-zoom slot="top-left"></arcgis-zoom>
+    <arcgis-scale-bar slot="bottom-left" unit="metric"></arcgis-scale-bar>
+  </arcgis-map>
+
+  <div class="controls">
+    <button id="set-extent" class="secondary">Extent aus Ansicht setzen</button>
+    <button id="export">Level 0–14 exportieren</button>
+  </div>
+  <p class="hint">Verschiebe oder zoome die Karte und aktualisiere danach den blauen Exportbereich. Kleine Bereiche und wenige Level erzeugen kleinere Pakete.</p>
+  <p id="status" role="status" aria-live="polite">Der blaue Rahmen zeigt den Bereich, der als Vektorkachelpaket exportiert wird.</p>
+  <details>
+    <summary>Extent-JSON anzeigen</summary>
+    <code id="extent-json">Wird geladen…</code>
+  </details>
+
+  <article>
+    <p><strong>Offline-Export:</strong> Der Exportdienst ist für kleine Mengen von Basemap-Kacheln vorgesehen.</p>
+    <h1>Basemap für einen Extent exportieren</h1>
+
+    <h2>Was du siehst</h2>
+    <p>Die Karte startet über Köln. Ein blauer Rahmen markiert den Exportbereich. Unter der Karte kannst du den Bereich aus der aktuellen Ansicht neu berechnen, den Export starten und das zugrunde liegende Extent-JSON aufklappen.</p>
+
+    <h2>Wie es funktioniert</h2>
+    <p>Die Lesson erzeugt aus 70 Prozent der sichtbaren Kartenansicht ein <code>Extent</code>-Objekt in Web Mercator. Dieses wird als Grafik gezeichnet und zusammen mit den Leveln 0–14 an die asynchrone <code>exportTiles</code>-Operation des <code>World_Basemap_Export_v2</code>-Services gesendet. Nach erfolgreichem Abschluss liest die Anwendung die signierte <code>output.outputUrl</code> aus der Jobantwort und öffnet das erzeugte <code>.vtpk</code>-Paket.</p>
+
+    <h2>Probiere es aus</h2>
+    <p>Zoome zunächst auf einen kleinen Teil von Köln und klicke auf <strong>Extent aus Ansicht setzen</strong>. Öffne anschließend das Extent-JSON und beobachte, wie sich <code>xmin</code>, <code>ymin</code>, <code>xmax</code> und <code>ymax</code> ändern. Starte danach den Export. Teste anschließend einen größeren Kartenausschnitt und vergleiche die Größe der beiden Pakete.</p>
+
+    <h2>Was kommt als Nächstes?</h2>
+    <p>Ergänze eine Level-Auswahl, zeige die geschätzte Kachelzahl vor dem Export an oder verwende statt des rechteckigen Extents ein Polygon als genaueres Interessengebiet.</p>
+
+    <h2>API-Key / Zugriff</h2>
+    <p>Die Lesson liest den API-Key aus <code>sessionStorage</code>. Verwende einen Schlüssel mit den erforderlichen Basemap-Berechtigungen und beschränke seine HTTP-Referrer auf die tatsächliche Sandbox-Adresse. Der Schlüssel wird nicht in den Quellcode geschrieben. Die signierte Download-URL ist nur temporär gültig.</p>
+
+    <h2>Dokumentation</h2>
+    <ul>
+      <li><a href="https://developers.arcgis.com/rest/services-reference/enterprise/export-tiles-vector-tile-service/" target="_blank" rel="noreferrer">Export Tiles REST API</a></li>
+      <li><a href="https://www.arcgis.com/home/item.html?id=df541726b3df4c0caf99255bb1be4c86" target="_blank" rel="noreferrer">World Topographic Map (for Export)</a></li>
+      <li><a href="https://developers.arcgis.com/javascript/latest/references/map-components/components/arcgis-map/" target="_blank" rel="noreferrer">ArcGIS Map Component</a></li>
+    </ul>
+    <p><small>Exportiere nur die Level und die Fläche, die dein Offline-Szenario tatsächlich benötigt. Große Extents bei hohen Leveln erhöhen Kachelzahl, Dateigröße und Verarbeitungszeit deutlich.</small></p>
+  </article>
+
+  <script type="module">
+    const [Extent, Graphic] = await Promise.all([
+      $arcgis.import("@arcgis/core/geometry/Extent.js"),
+      $arcgis.import("@arcgis/core/Graphic.js")
+    ]);
+
+    const mapElement = document.querySelector("arcgis-map");
+    const extentOutput = document.querySelector("#extent-json");
+    const status = document.querySelector("#status");
+    const exportButton = document.querySelector("#export");
+    const serviceUrl = "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_Export_v2/VectorTileServer";
+    let exportExtent;
+    let extentGraphic;
+
+    mapElement.addEventListener("arcgisViewReadyChange", () => setExtentFromView(), { once: true });
+    document.querySelector("#set-extent").addEventListener("click", setExtentFromView);
+    exportButton.addEventListener("click", exportBasemap);
+
+    function setExtentFromView() {
+      // 70 % der sichtbaren Ansicht ergeben einen gut erkennbaren Export-Rahmen.
+      const visible = mapElement.extent;
+      const width = visible.width * 0.3;
+      const height = visible.height * 0.7;
+
+      exportExtent = new Extent({
+        xmin: visible.center.x - width / 2,
+        ymin: visible.center.y - height / 2,
+        xmax: visible.center.x + width / 2,
+        ymax: visible.center.y + height / 2,
+        spatialReference: visible.spatialReference
+      });
+
+      if (extentGraphic) mapElement.graphics.remove(extentGraphic);
+      extentGraphic = new Graphic({
+        geometry: exportExtent,
+        symbol: {
+          type: "simple-fill",
+          color: [0, 122, 194, 0.08],
+          outline: { color: [0, 122, 194, 1], width: 3 }
+        }
+      });
+      mapElement.graphics.add(extentGraphic);
+
+      extentOutput.textContent = JSON.stringify(exportExtent.toJSON(), null, 2);
+      status.textContent = "Extent gesetzt. Bereit zum Export.";
+    }
+
+   
+    async function exportBasemap() {
+      const token = sessionStorage.getItem("ARCGIS_API_KEY");
+
+      const params = new URLSearchParams({
+        f: "json",
+        token,
+        extent: JSON.stringify(exportExtent.toJSON()),
+        levels: "0-14"
+      });
+
+      // Disable button and show status
+      exportButton.disabled = true;
+      status.textContent = "Export wird gestartet...";
+
+      // 1. Start export
+      const response = await fetch(`${serviceUrl}/exportTiles?${params}`);
+      const { jobId } = await response.json();
+
+      // 2. Wait until export is finished
+      status.textContent = "Basemap wird exportiert...";
+
+      let job;
+      do {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const response = await fetch(
+          `${serviceUrl}/jobs/${jobId}?f=json&token=${encodeURIComponent(token)}`
+        );
+        job = await response.json();
+
+      } while (job.jobStatus !== "esriJobSucceeded");
+
+      // 3. Download VTPK
+      status.textContent = "Export abgeschlossen! Download wird gestartet...";
+      window.open(job.output.outputUrl[0], "_blank");
+
+      // Enable button again
+      exportButton.disabled = false;
+    }
+
+  </script>
+</body>
+</html>

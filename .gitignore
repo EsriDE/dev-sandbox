@@ -1,2 +1,7 @@
 .runtime/
 .vscode/settings.json
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pycache/

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Static map image</title>
+  <style>
+    /* Standalone lesson: interactive demo first, explanation below. */
+    body {margin:0;font:16px/1.55 system-ui,sans-serif;color:#23313d;background:#fff}
+    arcgis-map {display:block;height:56vh;min-height:310px}
+    article {max-width:820px;margin:0 auto;padding:26px 24px 64px}
+    .controls {display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:13px 20px;background:#f0f5f8}
+    button,input,select {font:inherit;padding:8px 11px;border-radius:5px;border:1px solid #a9b8c5}
+    input[type=url] {width:min(440px,90vw)}
+    button {background:#007ac2;color:white;border-color:#007ac2;cursor:pointer}
+    pre {white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;margin:0;background:#edf3f7;font:13px/1.5 ui-monospace,monospace;max-height:240px;overflow:auto}
+    .notice {padding:12px 14px;background:#fff3db;border-left:4px solid #a76700}
+    .result {min-height:44px}
+    .image-preview {display:grid;place-items:center;height:min(54vh,480px);background:#edf3f7}
+    .image-preview img {max-width:95%;max-height:95%;object-fit:contain}
+    h1 {line-height:1.2}h2 {margin-top:30px}a {color:#006da8}
+  </style>
+
+</head>
+<body>
+  <div class="image-preview"><img id="image" alt="Generated static ArcGIS map" hidden><p id="placeholder">Click Generate to request a static map image.</p></div>
+  <div class="controls"><select id="style"><option value="streets">Streets</option><option value="imagery">Imagery</option></select><button id="generate">Generate static image</button></div><pre id="result" aria-live="polite">Ready.</pre>
+  <article>
+    <p><strong>Free-tier allowance:</strong> 1,000 maps · Mapping · Live</p>
+    <h1>Static map image</h1>
+    <p>Generate a single PNG map image centered on Marburg.</p>
+    
+    <h2>What you see</h2>
+    <p>A static map appears after you click the button. It is an image rather than a draggable map.</p>
+    <h2>How it works</h2>
+    <p>The Static Maps REST endpoint returns an image with its attribution. A bearer header keeps the API key out of the image URL. Each generated image counts toward static map usage.</p>
+    <h2>Try it</h2>
+    <p>Switch the style between streets and imagery, then generate another image.</p>
+    
+    <h2>What’s next?</h2>
+    <p>Try another style or compare tile and session billing models.</p>
+    <h2>API key / access</h2>
+    <p>Basemaps, Basemap sessions (Location Platform), or Static maps depending on the lesson. Access, availability and quotas depend on the credentials and subscription.</p>
+    <h2>Documentation</h2>
+    <ul>
+      <li><a href="https://developers.arcgis.com/rest/static-maps/basemap-style-with-point-get/" target="_blank" rel="noreferrer">Static Maps REST reference</a></li>
+      <li><a href="https://location.arcgis.com/pricing/" target="_blank" rel="noreferrer">Current free-tier quantities and pricing</a></li>
+    </ul>
+    <p><small>Free tier = allowance, not unlimited usage. Service access requires the appropriate API-key privileges. Charges can apply after the allowance if pay-as-you-go is enabled.</small></p>
+  </article>
+<script type="module">
+  let previousUrl;
+  document.querySelector("#generate").addEventListener("click", async () => {
+    const output = document.querySelector("#result");
+    output.textContent = "Generating image…";
+    try {
+      const style = document.querySelector("#style").value;
+      const url = `https://static-maps-api.arcgis.com/arcgis/rest/services/static-maps-service/v1/static-maps/arcgis/${style}/with-point?x=8.77&y=50.81&width=640&height=380&format=png&zoom=12`;
+      const response = await fetch(url, {headers: {Authorization: `Bearer ${sessionStorage.getItem("ARCGIS_API_KEY")}`}});
+      if (!response.ok) throw Error(`HTTP ${response.status}: ${await response.text()}`);
+      const image = document.querySelector("#image");
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      previousUrl = URL.createObjectURL(await response.blob());
+      image.src = previousUrl;
+      image.hidden = false;
+      document.querySelector("#placeholder").hidden = true;
+      output.textContent = "Static map created. Attribution is included in the image by default.";
+    } catch(error) { output.textContent = error.message; }
+  });</script>
+</body>
+</html>

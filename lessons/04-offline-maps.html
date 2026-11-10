@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prepare maps for offline use</title>
+  <style>
+    /* This lesson is a standalone HTML document; the sandbox embeds it unchanged. */
+    body { margin: 0; font: 16px/1.6 system-ui, sans-serif; color: #25333d; }
+    arcgis-map { display: block; height: 50vh; min-height: 340px; }
+    article { max-width: 790px; margin: auto; padding: 24px 22px 60px; }
+    h1 { line-height: 1.2; }
+    h2 { margin-top: 30px; }
+    a { color: #006da8; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input, select, button { font: inherit; padding: 8px; }
+    input { width: min(100%, 430px); box-sizing: border-box; }
+    button { cursor: pointer; }
+    .tools { background: #eff5f8; padding: 14px 22px; }
+    .tools > div { max-width: 790px; margin: auto; }
+    .inspect { padding: 18px; background: #f5f7f8; border: 1px solid #d5e0e6; border-radius: 6px; }
+    .inspect button { margin-top: 10px; }
+    .layer-list { padding-left: 22px; }
+    .layer-list li { margin: 8px 0; }
+    .note { color: #566470; font-size: 0.92rem; }
+  </style>
+  <script>
+    // The sandbox API key authorizes basemap requests, not private portal content.
+    var esriConfig = { apiKey: sessionStorage.getItem("ARCGIS_API_KEY") || "" };
+  </script>
+  <script type="module" src="https://js.arcgis.com/5.1/"></script>
+</head>
+<body>
+  <div class="tools">
+    <div>
+      <label for="basemap">Explore basemaps that can be prepared for offline apps</label>
+      <select id="basemap">
+        <option value="arcgis/topographic">Topographic (vector)</option>
+        <option value="arcgis/navigation">Navigation (vector)</option>
+        <option value="arcgis/imagery">Imagery (raster tiles)</option>
+      </select>
+      <p class="note">This preview needs internet. Selecting a basemap does not download it.</p>
+    </div>
+  </div>
+
+  <!-- An ordinary, declarative ArcGIS Web Component: this is an ONLINE preview. -->
+  <arcgis-map id="map" basemap="arcgis/topographic" center="8.77,50.81" zoom="11">
+    <arcgis-zoom slot="top-left"></arcgis-zoom>
+    <arcgis-scale-bar slot="bottom-left" unit="metric"></arcgis-scale-bar>
+  </arcgis-map>
+
+  <article>
+    <h1>Prepare maps for offline use</h1>
+    <p>Offline mapping has two distinct steps: <strong>prepare a Web Map and offline map areas in the portal</strong>, then <strong>download them in a supported native application</strong>. A normal browser map cannot itself use those downloaded offline map areas.</p>
+
+    <h2>1. Which map content can go offline?</h2>
+    <ul>
+      <li><strong>Esri basemaps:</strong> Esri vector and raster basemaps generally support offline packaging. Other tile services need appropriate tile export capabilities.</li>
+      <li><strong>Feature layers:</strong> a feature service generally needs the <code>Sync</code> capability enabled for offline workflows.</li>
+      <li><strong>Web Maps:</strong> the Web Map and <em>all required layers</em> must support offline use. Configure offline mode and map areas in the portal.</li>
+      <li><strong>Other services:</strong> dynamic map services, WMS, or unsupported reference layers require additional review and may block an offline map.</li>
+    </ul>
+
+    <h2>2. Inspect a public portal Web Map</h2>
+    <p>Paste a Web Map item ID from your ArcGIS portal. This tool reads public Web Map JSON and checks the <code>Sync</code> capability of accessible feature services. It is a <strong>preliminary check</strong>, not a guarantee that a map can be packaged.</p>
+    <form id="inspect" class="inspect">
+      <label for="item-id">Public ArcGIS Online Web Map item ID</label>
+      <input id="item-id" name="item-id" value="05e015c5f0314db9a487a9b46cb37eca" maxlength="32" pattern="[a-fA-F0-9]{32}" required spellcheck="false" autocomplete="off">
+      <button type="submit">Inspect Web Map</button>
+      <p id="status" role="status" aria-live="polite">The example ID is a public Web Map; it is not necessarily offline-enabled.</p>
+      <ul id="layer-list" class="layer-list" aria-label="Offline suitability observations"></ul>
+      <a id="portal-item" href="https://www.arcgis.com/home/content.html" target="_blank" rel="noopener noreferrer">Open ArcGIS portal</a> ·
+      <a id="viewer-item" href="https://www.arcgis.com/apps/mapviewer/index.html" target="_blank" rel="noopener noreferrer">Open Map Viewer</a>
+    </form>
+    <p class="note">This example uses the public ArcGIS Online portal endpoint. Private or organization-only Web Maps require user authentication; the sandbox API key does not sign you into the portal. For ArcGIS Enterprise, adapt the portal REST URL and authentication.</p>
+
+    <h2>3. Prepare an offline area in the portal</h2>
+    <ol>
+      <li><a href="https://www.arcgis.com/apps/mapviewer/index.html" target="_blank" rel="noopener noreferrer">Open Map Viewer</a>, sign in, and create or open a Web Map with compatible basemap and feature layers.</li>
+      <li>Save the map. Open its <strong>item details</strong>, then <strong>Settings → Offline</strong> and enable offline mode. If unavailable, check each layer's capabilities.</li>
+      <li>Select <strong>Manage Offline Areas → Create offline area</strong>. Draw a rectangle or polygon, set the level of detail, name the area, and save.</li>
+      <li>Wait for the portal to package the area. A mobile/native app built with an ArcGIS Maps SDK for Native Apps can subsequently download and display it offline.</li>
+    </ol>
+
+    <h2>What you see and what to try</h2>
+    <p>The live map at the top is an <em>online preview</em>; the dropdown switches styles and shows the geographic content a basemap provides. The inspector reports the layers referenced by a public portal Web Map, and, when possible, whether feature services advertise Sync.</p>
+    <ol>
+      <li>Switch between vector topographic and raster imagery. Note that offline packages use different tile formats.</li>
+      <li>Inspect the example Web Map, then paste the ID of one of your own <em>public</em> Web Maps.</li>
+      <li>Open its portal item page and compare the inspector's observations with <strong>Settings → Offline</strong>.</li>
+      <li>Open the code panel, change the map's <code>center</code>, and run the lesson again.</li>
+    </ol>
+
+    <h2>Limitations</h2>
+    <p>This lesson does not download tiles, create packages, switch the web application offline, or change portal settings. Portal configuration needs a signed-in account with sufficient privileges. Offline map preparation with an ArcGIS Location Platform account has <strong>partial product support</strong>; see the account requirements below before planning a production workflow.</p>
+
+    <h2>Documentation</h2>
+    <ul>
+      <li><a href="https://developers.arcgis.com/documentation/offline-mapping-apps/tutorials/tools/create-an-offline-enabled-web-map/" target="_blank" rel="noopener noreferrer">Create an offline-enabled Web Map</a></li>
+      <li><a href="https://developers.arcgis.com/documentation/offline-mapping-apps/tutorials/tools/create-an-offline-map-area/" target="_blank" rel="noopener noreferrer">Create an offline map area</a></li>
+      <li><a href="https://developers.arcgis.com/documentation/offline-mapping-apps/partially-offline-apps/offline-maps/" target="_blank" rel="noopener noreferrer">Supported maps and offline workflows</a></li>
+      <li><a href="https://developers.arcgis.com/documentation/offline-mapping-apps/get-started/" target="_blank" rel="noopener noreferrer">Offline account and product requirements</a></li>
+      <li><a href="https://developers.arcgis.com/rest/services-reference/enterprise/sync-enabled-feature-services/" target="_blank" rel="noopener noreferrer">Feature service Sync capability</a></li>
+    </ul>
+  </article>
+
+  <script>
+    const map = document.querySelector("#map");
+    document.querySelector("#basemap").addEventListener("change", (event) => {
+      // Basemap switching is online-only; it does not create an offline package.
+      map.basemap = event.target.value;
+    });
+
+    async function readJSON(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const json = await response.json();
+      if (json.error) throw new Error(json.error.message || "Portal request failed");
+      return json;
+    }
+
+    const serviceCache = new Map();
+    async function featureSyncStatus(url) {
+      const root = (url || "").replace(/\/\d+\/?$/, "").replace(/\/$/, "");
+      if (!/^https:\/\//i.test(root) || !/\/FeatureServer$/i.test(root)) {
+        return "Feature layer: service cannot be checked here";
+      }
+      if (!serviceCache.has(root)) {
+        serviceCache.set(root, readJSON(`${root}?f=json`));
+      }
+      try {
+        const info = await serviceCache.get(root);
+        // Sync is advertised at the FeatureServer root, not at the individual layer URL.
+        const capabilities = String(info.capabilities || "").split(",").map((value) => value.trim());
+        return capabilities.includes("Sync") ? "Sync advertised (good candidate)" : "No Sync capability (not ready)";
+      } catch {
+        return "Service metadata unavailable (check in portal)";
+      }
+    }
+
+    async function describeLayer(layer, isBasemap) {
+      const kind = layer.layerType || layer.type || "Unknown layer type";
+      const title = layer.title || layer.name || "Untitled layer";
+      const isFeature = /FeatureLayer/i.test(kind) || /\/FeatureServer(?:\/\d+)?\/?$/i.test(layer.url || "");
+      let result = "Check offline/export support in portal";
+      if (isFeature) result = await featureSyncStatus(layer.url);
+      else if (/VectorTile|VectorTiled|TiledMapService|TileLayer/i.test(kind)) {
+        result = "Tile layer candidate; verify tile export and offline settings";
+      } else if (!isBasemap) result = "Unsupported or unverified layer type; review before packaging";
+      return `${isBasemap ? "Basemap" : "Layer"}: ${title} (${kind}) — ${result}`;
+    }
+
+    document.querySelector("#inspect").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const id = document.querySelector("#item-id").value.trim();
+      if (!/^[a-f\d]{32}$/i.test(id)) return;
+      const status = document.querySelector("#status");
+      const list = document.querySelector("#layer-list");
+      const itemLink = document.querySelector("#portal-item");
+      const viewerLink = document.querySelector("#viewer-item");
+      list.replaceChildren();
+      itemLink.href = `https://www.arcgis.com/home/item.html?id=${id}`;
+      itemLink.textContent = "Open this Web Map in the portal →";
+      viewerLink.href = `https://www.arcgis.com/apps/mapviewer/index.html?webmap=${id}`;
+      viewerLink.textContent = "Preview this Web Map in Map Viewer →";
+      status.textContent = "Reading public portal metadata…";
+      try {
+        const url = `https://www.arcgis.com/sharing/rest/content/items/${id}`;
+        const item = await readJSON(`${url}?f=json`);
+        if (item.type !== "Web Map") throw new Error("This item is not a Web Map.");
+        const data = await readJSON(`${url}/data?f=json`);
+        const basemapLayers = data.baseMap?.baseMapLayers || [];
+        const operationalLayers = data.operationalLayers || [];
+        for (const [layers, basemap] of [[basemapLayers, true], [operationalLayers, false]]) {
+          for (const layer of layers) {
+            const row = document.createElement("li");
+            row.textContent = await describeLayer(layer, basemap);
+            list.append(row);
+          }
+        }
+        status.textContent = `${item.title}: ${basemapLayers.length} basemap layer(s), ${operationalLayers.length} operational layer(s). Check Settings → Offline in the portal for final eligibility.`;
+        if (!list.childElementCount) status.textContent += " No layer definitions found.";
+      } catch (error) {
+        status.textContent = `Could not inspect: ${error.message}. Public item access is required; private maps need user sign-in.`;
+      }
+    });
+  </script>
+</body>
+</html>

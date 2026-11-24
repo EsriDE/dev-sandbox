@@ -13,6 +13,12 @@
     /* Standalone lesson: map first, concise controls, learning text below. */
     body { margin:0; font:16px/1.55 system-ui,sans-serif; color:#23313d; background:#fff }
     arcgis-map { display:block; height:min(65vh, 610px); min-height:340px }
+    #basemapStyles {
+      background-color: white;
+      border-radius: 5px;
+      padding: 10px;
+      width: 250px;
+    }
     .controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 20px; background:#eef5f9 }
     button { font:inherit; padding:8px 11px; border:1px solid #007ac2; border-radius:5px; color:#fff; background:#007ac2; cursor:pointer }
     button:disabled { opacity:.65; cursor:wait }
@@ -31,11 +37,19 @@
   <arcgis-map basemap="arcgis/topographic" center="6.96,50.94" zoom="11">
     <arcgis-zoom slot="top-left"></arcgis-zoom>
     <arcgis-scale-bar slot="bottom-left" unit="metric"></arcgis-scale-bar>
+
+    <div id="basemapStyles" slot="top-right">
+      <calcite-label>
+        Basemap Style:
+        <calcite-combobox id="styleCombobox" selection-mode="single" clear-disabled></calcite-combobox>
+      </calcite-label>
+    </div>
   </arcgis-map>
 
   <div class="controls">
     <button id="set-extent" class="secondary">Extent aus Ansicht setzen</button>
-    <button id="export">Level 0–14 exportieren</button>
+    <button id="export">Basemap exportieren</button>
+    <button id="export-styles" class="secondary">Basemap-Stile herunterladen</button>
   </div>
   <p class="hint">Verschiebe oder zoome die Karte und aktualisiere danach den blauen Exportbereich. Kleine Bereiche und wenige Level erzeugen kleinere Pakete.</p>
   <p id="status" role="status" aria-live="polite">Der blaue Rahmen zeigt den Bereich, der als Vektorkachelpaket exportiert wird.</p>
@@ -52,7 +66,7 @@
     <p>Die Karte startet über Köln. Ein blauer Rahmen markiert den Exportbereich. Unter der Karte kannst du den Bereich aus der aktuellen Ansicht neu berechnen, den Export starten und das zugrunde liegende Extent-JSON aufklappen.</p>
 
     <h2>Wie es funktioniert</h2>
-    <p>Die Lesson erzeugt aus 70 Prozent der sichtbaren Kartenansicht ein <code>Extent</code>-Objekt in Web Mercator. Dieses wird als Grafik gezeichnet und zusammen mit den Leveln 0–14 an die asynchrone <code>exportTiles</code>-Operation des <code>World_Basemap_Export_v2</code>-Services gesendet. Nach erfolgreichem Abschluss liest die Anwendung die signierte <code>output.outputUrl</code> aus der Jobantwort und öffnet das erzeugte <code>.vtpk</code>-Paket.</p>
+    <p>Die Lesson erzeugt aus 70 Prozent der sichtbaren Kartenansicht ein <code>Extent</code>-Objekt in Web Mercator. Dieses wird als Grafik gezeichnet und zusammen mit den Leveln 0–14 an die asynchrone <code>exportTiles</code>-Operation des <code>World_Basemap_Export_v2</code>-Services gesendet. Nach erfolgreichem Abschluss liest die Anwendung die signierte <code>output.outputUrl</code> aus der Jobantwort und öffnet das erzeugte <code>.vtpk</code>-Paket. Die Ressourcen des zugehörigen Vector-Tile-Items lassen sich separat als ZIP herunterladen.</p>
 
     <h2>Probiere es aus</h2>
     <p>Zoome zunächst auf einen kleinen Teil von Köln und klicke auf <strong>Extent aus Ansicht setzen</strong>. Öffne anschließend das Extent-JSON und beobachte, wie sich <code>xmin</code>, <code>ymin</code>, <code>xmax</code> und <code>ymax</code> ändern. Starte danach den Export. Teste anschließend einen größeren Kartenausschnitt und vergleiche die Größe der beiden Pakete.</p>
@@ -66,6 +80,7 @@
     <h2>Dokumentation</h2>
     <ul>
       <li><a href="https://developers.arcgis.com/rest/services-reference/enterprise/export-tiles-vector-tile-service/" target="_blank" rel="noreferrer">Export Tiles REST API</a></li>
+      <li><a href="https://developers.arcgis.com/rest/users-groups-and-items/export-item-resources/" target="_blank" rel="noreferrer">Export Item Resources REST API</a></li>
       <li><a href="https://www.arcgis.com/home/item.html?id=df541726b3df4c0caf99255bb1be4c86" target="_blank" rel="noreferrer">World Topographic Map (for Export)</a></li>
       <li><a href="https://developers.arcgis.com/javascript/latest/references/map-components/components/arcgis-map/" target="_blank" rel="noreferrer">ArcGIS Map Component</a></li>
     </ul>
@@ -79,19 +94,94 @@
     ]);
 
     const mapElement = document.querySelector("arcgis-map");
+    const styleCombobox = document.querySelector("#styleCombobox");
+    // wait for the view to be ready
+    await mapElement.viewOnReady();
+
+    /*
+    arcgis/imagery
+    arcgis/light-gray
+    arcgis/dark-gray
+    arcgis/navigation-night
+    arcgis/streets
+    arcgis/streets-night
+    arcgis/streets-relief
+    arcgis/topographic
+    arcgis/oceans
+    arcgis/terrain
+    arcgis/community
+    arcgis/charted-territory
+    arcgis/colored-pencil
+    arcgis/nova
+    arcgis/modern-antique
+    arcgis/midcentury
+    arcgis/newspaper
+    arcgis/human-geography
+    arcgis/human-geography-dark
+    arcgis/outdoor  
+    open/blueprint
+    open/dark-gray
+    open/hybrid
+    open/light-gray
+    open/navigation
+    open/navigation-dark
+    open/streets
+    open/streets-night
+    open/streets-relief
+    open/osm-style
+    open/osm-style-relief
+    */
+
+    // add the custom basemap styles
+    const basemapStyles = [
+      { name: "World Topographic Map", url: "https://www.arcgis.com/home/item.html?id=df541726b3df4c0caf99255bb1be4c86", itemId: "df541726b3df4c0caf99255bb1be4c86", path: "arcgis/topographic", exportUrl: "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_Export_v2/VectorTileServer" },
+      { name: "Open Basemap", url: "https://www.arcgis.com/home/item.html?id=aa809b0ba7a14c61a3a25a6d1df3e6af", itemId: "aa809b0ba7a14c61a3a25a6d1df3e6af", path: "open/osm-style", exportUrl: "https://basemaps.arcgis.com/arcgis/rest/services/OpenBasemap_v2/VectorTileServer" },
+      { name: "Open Light Gray", url: "https://www.arcgis.com/home/item.html?id=644f419d16d04b599ac3dc155f1ae9e2", itemId: "644f419d16d04b599ac3dc155f1ae9e2", path: "open/light-gray", exportUrl: "https://basemaps.arcgis.com/arcgis/rest/services/OpenBasemap_v2/VectorTileServer" },
+      { name: "Open Dark Gray", url: "https://www.arcgis.com/home/item.html?id=4bb68e8cb12142b2aecf9d79254992dc", itemId: "4bb68e8cb12142b2aecf9d79254992dc", path: "open/dark-gray", exportUrl: "https://basemaps.arcgis.com/arcgis/rest/services/OpenBasemap_v2/VectorTileServer" },
+      { name: "Nova", url: "https://www.arcgis.com/home/item.html?id=6e481fb5345748bb8ff50441eb1afb28", itemId: "6e481fb5345748bb8ff50441eb1afb28", path: "arcgis/nova", exportUrl: "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_Export_v2/VectorTileServer" },
+      { name: "Imagery", url: "https://www.arcgis.com/home/item.html?id=226d23f076da478bba4589e7eae95952#overview", itemId: "226d23f076da478bba4589e7eae95952#overview", path: "arcgis/imagery", exportUrl: "https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer" }
+    ];
+
+    basemapStyles.forEach(style => {
+      const item = document.createElement("calcite-combobox-item");
+      item.heading = style.name;
+      item.value = style.path;
+      styleCombobox.appendChild(item);
+
+      // if the current basemap style is the same as the combobox item, select it
+      item.selected = mapElement.basemap.style.id === style.path;
+    });
+
+    styleCombobox.addEventListener("calciteComboboxChange", (event) => {
+      const basemapId = event.target.value;
+      if (basemapId) {
+        // update the basemap style
+        mapElement.basemap = basemapId;
+      }
+    });
+
     const extentOutput = document.querySelector("#extent-json");
     const status = document.querySelector("#status");
     const exportButton = document.querySelector("#export");
+    const exportStylesButton = document.querySelector("#export-styles");
     const serviceUrl = "https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_Export_v2/VectorTileServer";
-    //const serviceUrl = "https://basemaps-api.arcgis.com/arcgis/rest/services/OpenBasemap_v2/VectorTileServer";
+    const itemId = "df541726b3df4c0caf99255bb1be4c86";
+    //const serviceUrl = "https://basemaps.arcgis.com/arcgis/rest/services/OpenBasemap_v2/VectorTileServer";
     let exportExtent;
     let extentGraphic;
 
     mapElement.addEventListener("arcgisViewReadyChange", () => setExtentFromView(), { once: true });
     document.querySelector("#set-extent").addEventListener("click", setExtentFromView);
     exportButton.addEventListener("click", exportBasemap);
+    exportStylesButton.addEventListener("click", exportBasemapStyles);
 
     function setExtentFromView() {
+      const { minLevel, maxLevel } = getMinMaxLevels();
+      if (mapElement.zoom < minLevel || mapElement.zoom > maxLevel) {
+        status.textContent = `Zoom level must be between ${minLevel} and ${maxLevel}.`;
+        return;
+      }
+
       // 70 % der sichtbaren Ansicht ergeben einen gut erkennbaren Export-Rahmen.
       const visible = mapElement.extent;
       const width = visible.width * 0.3;
@@ -120,20 +210,57 @@
       status.textContent = "Extent gesetzt. Bereit zum Export.";
     }
 
-   
+    function getMinMaxLevels() {
+      const minLevel = 10;
+      const maxLevel = 20;
+      return { minLevel, maxLevel };
+    }
+
     async function exportBasemap() {
       const token = sessionStorage.getItem("ARCGIS_API_KEY");
 
-      const params = new URLSearchParams({
+      let { minLevel, maxLevel } = getMinMaxLevels();
+      if (minLevel < mapElement.zoom)
+        minLevel = mapElement.zoom;
+        if (maxLevel < minLevel)
+          minLevel = maxLevel;
+
+      let params = new URLSearchParams({
         f: "json",
         token,
         extent: JSON.stringify(exportExtent.toJSON()),
-        levels: "0-14"
+        levels: `${minLevel}-${maxLevel}`
       });
 
       // Disable button and show status
       exportButton.disabled = true;
       status.textContent = "Export wird gestartet...";
+
+      // Find selected basemap style
+      let serviceUrl;
+      basemapStyles.forEach(style => {
+        if (style.path === styleCombobox.value) {
+          serviceUrl = style.exportUrl;
+        }
+      });
+
+      // Check if serviceUrl is found
+      if (!serviceUrl) {
+        status.textContent = "Fehler: Kein gültiger Basemap-Stil ausgewählt.";
+        exportButton.disabled = false;
+        return;
+      }
+
+      if (serviceUrl.endsWith("/MapServer")) {
+        params = new URLSearchParams({
+          f: "json",
+          token,
+          exportExtent: JSON.stringify(exportExtent.toJSON()),
+          exportBy: "LevelID",
+          levels: `${minLevel}-${maxLevel}`,
+          tilePackage: "true"
+        });
+      }
 
       // 1. Start export
       const response = await fetch(`${serviceUrl}/exportTiles?${params}`);
@@ -160,15 +287,103 @@
           exportButton.disabled = false;
           return;
         }
+        if (job.jobStatus === "esriJobFailed") {
+          status.textContent = `Fehler beim Export: ${job.messages?.map(m => m.description).join(", ") || "Unbekannter Fehler"}`;
+          exportButton.disabled = false;
+          return;
+        }
 
       } while (job.jobStatus !== "esriJobSucceeded");
 
-      // 3. Download VTPK
+      // 3. Download VTPK/TPK
       status.textContent = "Export abgeschlossen! Download wird gestartet...";
-      window.open(job.output.outputUrl[0], "_blank");
+      if (serviceUrl.endsWith("/MapServer")) {
+        const resultResponse = await fetch(
+          `${serviceUrl}/jobs/${jobId}/results/out_service_url?f=json&token=${encodeURIComponent(token)}`
+        );
+        let exportResult = await resultResponse.json();
+        if (!exportResult?.value) {
+          status.textContent = `Fehler beim Export: Kein Ergebnis erhalten`;
+          exportButton.disabled = false;
+          return;
+        }
+        
+        // Get the file url to the tile package (TPK)
+        const tpkResponse = await fetch(
+          `${exportResult.value}?f=json&token=${encodeURIComponent(token)}`
+        );
+        let tpkResource = await tpkResponse.json();
+        if (!tpkResource?.files) {
+          status.textContent = `Fehler beim Export: Keine Dateien im Ergebnis`;
+          exportButton.disabled = false;
+          return;
+        }
+
+        for (const file of tpkResource.files) {
+          if (file.url) {
+            window.open(file.url, "_blank");
+            break;
+          }
+        }
+      }
+      else {
+        window.open(job.output.outputUrl[0], "_blank");
+      }
 
       // Enable button again
       exportButton.disabled = false;
+    }
+
+    async function exportBasemapStyles() {
+      const token = sessionStorage.getItem("ARCGIS_API_KEY");
+      const params = new URLSearchParams({ f: "zip" });
+      if (token) params.set("token", token);
+
+      console.log(mapElement.zoom);
+      return;
+
+      exportStylesButton.disabled = true;
+      status.textContent = "Basemap-Stile werden heruntergeladen...";
+
+      // Find selected basemap style
+      let itemId;
+      basemapStyles.forEach(style => {
+        if (style.path === styleCombobox.value) {
+          itemId = style.itemId;
+        }
+      });
+
+      try {
+        const response = await fetch(`https://www.arcgis.com/sharing/rest/content/items/${itemId}/resources/export?${params}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const blob = await response.blob();
+        const signature = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
+        if (signature[0] !== 0x50 || signature[1] !== 0x4b ||
+            !((signature[2] === 0x03 && signature[3] === 0x04) ||
+              (signature[2] === 0x05 && signature[3] === 0x06))) {
+          const result = await blob.text();
+          let message = result;
+          try {
+            message = JSON.parse(result).error?.message || result;
+          } catch {
+            // Die Antwort ist kein ArcGIS-JSON.
+          }
+          throw new Error(message || "Keine ZIP-Datei erhalten");
+        }
+
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = "resources.zip";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        status.textContent = "Basemap-Stile heruntergeladen.";
+      } catch (error) {
+        status.textContent = `Fehler beim Download der Basemap-Stile: ${error.message}`;
+      } finally {
+        exportStylesButton.disabled = false;
+      }
     }
 
   </script>
